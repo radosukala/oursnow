@@ -56,8 +56,6 @@ records it gives you. Point `www` at the apex as a redirect.
 
 - [ ] `/deal` reads true against what actually exists that day
 - [ ] `DATA_CONTROLLER` decided — named, or the email step stays off
-- [ ] a licence chosen (see the README; until then the default is
-      all rights reserved, which is not what this project means)
 - [ ] `npm run check:colour` run against a scratch copy of the production
       database, never against live rows
 - [ ] the first vote cast by somebody who is not the person who built it

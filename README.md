@@ -13,13 +13,14 @@ a vote costs you nothing — your place is not the prize.
 
 Deploys to **oursnow.co**.
 
-## Licence — not chosen yet
+## Licence
 
-There is no `LICENSE` file, which means the legal default applies: all
-rights reserved. That is not what this project means, and it is written here
-rather than left for someone to discover. Choosing one is a real decision
-with real consequences, so it is being made deliberately instead of by
-whichever file got committed first.
+[Apache 2.0](./LICENSE). Take it, run it, change it, run it somewhere else.
+Permissive is the consistent choice here rather than a generous one: the
+argument this project makes is that the code was never the valuable part, so
+locking it down would contradict the pitch. Whoever forks it gets working
+code and nobody, and the running instance is worth choosing only for as long
+as it deserves to be.
 
 ## Status, truthfully
 

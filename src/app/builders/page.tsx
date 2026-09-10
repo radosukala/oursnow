@@ -28,6 +28,13 @@ export default function Builders() {
       </p>
 
       <p>
+        The code is open, under a licence that lets anyone take it and run it
+        somewhere else. That is deliberate. The code was never the valuable
+        part — whoever forks it gets working software and nobody, and this one
+        is worth choosing only for as long as it deserves to be.
+      </p>
+
+      <p>
         The alternative is the one you already know: build an app, ship it, and
         have nobody come. Or raise money, and still have nobody come.
       </p>

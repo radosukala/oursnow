@@ -53,9 +53,12 @@ function verdict(state: State): string {
 export function Flow({
   initial,
   emailEnabled,
+  reachable = true,
 }: {
   initial: State;
   emailEnabled: boolean;
+  /** False when the server could not read the count for this request. */
+  reachable?: boolean;
 }) {
   const [state, setState] = useState<State>(initial);
   const [screen, setScreen] = useState<Screen>("start");
@@ -143,16 +146,18 @@ export function Flow({
         {object}
         <p className="caption">
           {help ??
-            (state.opening
-              ? "Nobody has chosen yet. Until somebody does, this is the colour it opened with, not a decision."
-              : "Its colour belongs to the majority.")}
+            (!reachable
+              ? "We can’t reach the count right now, so this is the colour it opened with."
+              : state.opening
+                ? "Nobody has chosen yet. Until somebody does, this is the colour it opened with, not a decision."
+                : "Its colour belongs to the majority.")}
         </p>
         <div className="choices">
           <button
             type="button"
             className="choice"
             aria-pressed={state.mine === "blue"}
-            disabled={pending}
+            disabled={pending || !reachable}
             onClick={() => choose("blue")}
           >
             Blue
@@ -161,12 +166,18 @@ export function Flow({
             type="button"
             className="choice"
             aria-pressed={state.mine === "red"}
-            disabled={pending}
+            disabled={pending || !reachable}
             onClick={() => choose("red")}
           >
             Red
           </button>
         </div>
+        {!reachable ? (
+          <p className="notice">
+            Voting is unavailable until the count can be reached again. Nothing
+            you do here would be recorded, so nothing is pretending to be.
+          </p>
+        ) : null}
         {error ? <p className="notice">{error}</p> : null}
         <p className="caption">
           Choosing also joins you, with equal standing. Read{" "}
