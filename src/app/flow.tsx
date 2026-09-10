@@ -212,7 +212,9 @@ export function Flow({
     <section className="enter" aria-live="polite">
       <h1>Yours. Equally.</h1>
       <p className="sub">
-        The person who made this gets the same say as you. That’s the deal.
+        The say, at any rate. One vote each, including the person who made
+        this, and no way for him to overrule you. Owning it together is the
+        part we haven’t built.
       </p>
       {object}
       <p className="outcome">{help ?? verdict(state)}</p>
