@@ -5,11 +5,8 @@ import {
   currentParticipantId,
   issueParticipantId,
 } from "@/lib/participant";
-import { isColour } from "@/lib/config";
-import { EMAIL_ENABLED } from "@/lib/config";
-import { db } from "@/db";
-import { participants } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { isColour, EMAIL_ENABLED } from "@/lib/config";
+import { confirmEmail, forgetEmail, requestEmail } from "@/lib/email";
 
 export type ActionResult =
   | { ok: true; state: State }
@@ -68,43 +65,43 @@ export async function refreshState(): Promise<ActionResult> {
 }
 
 /**
- * Attach an email so the share survives this browser.
+ * Ask to attach an address. Sends a confirmation; keeps nothing until the
+ * link is followed.
  *
- * Refused outright while no controller is named. Whoever is named in
- * DATA_CONTROLLER is answerable for every address this stores, so an unset
- * value has to mean the feature is off rather than that nobody is
- * responsible.
+ * Refused outright unless somebody is named as responsible for the data and
+ * mail can actually be sent. An unset controller has to mean the feature is
+ * off, not that nobody is answerable for what is collected.
  */
-export async function attachEmail(
+export async function requestEmailAttachment(
   raw: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   if (!EMAIL_ENABLED) {
     return {
       ok: false,
       message:
-        "We are not collecting addresses yet. Nobody has been named as responsible for them, so the box is switched off rather than quietly filling up.",
+        "We are not collecting addresses. Nobody has been named as responsible for them, so the box is switched off rather than quietly filling up.",
     };
-  }
-  const email = raw.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-    return { ok: false, message: "That does not look like an email address." };
   }
   const id = await currentParticipantId();
   if (!id) {
-    return { ok: false, message: "Choose a colour first — that is what joins you." };
-  }
-  try {
-    await db
-      .update(participants)
-      .set({ email, emailAddedAt: new Date() })
-      .where(eq(participants.id, id));
-    return { ok: true };
-  } catch (error) {
-    console.error("attachEmail failed", error);
     return {
       ok: false,
-      message:
-        "That address is already held by somebody else, or it did not reach us.",
+      message: "Choose a colour first — that is what joins you.",
     };
   }
+  return requestEmail(id, raw);
+}
+
+/** Complete the attachment from the link in the email. */
+export async function confirmEmailAttachment(
+  token: string,
+): Promise<{ ok: true; email: string } | { ok: false; message: string }> {
+  return confirmEmail(token);
+}
+
+/** Take the address back. Nothing is kept, and nothing is asked. */
+export async function removeEmail(): Promise<{ ok: boolean }> {
+  const id = await currentParticipantId();
+  if (id) await forgetEmail(id);
+  return { ok: true };
 }

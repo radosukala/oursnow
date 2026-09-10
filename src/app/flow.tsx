@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
-  attachEmail,
   chooseColour,
+  removeEmail,
+  requestEmailAttachment,
   withdrawColour,
   type ActionResult,
 } from "./actions";
@@ -54,11 +55,14 @@ export function Flow({
   initial,
   emailEnabled,
   reachable = true,
+  held = null,
 }: {
   initial: State;
   emailEnabled: boolean;
   /** False when the server could not read the count for this request. */
   reachable?: boolean;
+  /** The address already confirmed for this participant, if any. */
+  held?: string | null;
 }) {
   const [state, setState] = useState<State>(initial);
   const [screen, setScreen] = useState<Screen>("start");
@@ -66,6 +70,8 @@ export function Flow({
   const [help, setHelp] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [emailNote, setEmailNote] = useState<string | null>(null);
+  const [address, setAddress] = useState<string | null>(held);
+  const [sent, setSent] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function apply(result: ActionResult, then?: () => void) {
@@ -96,13 +102,25 @@ export function Flow({
     event.preventDefault();
     setEmailNote(null);
     startTransition(async () => {
-      const result = await attachEmail(email);
-      setEmailNote(
-        result.ok
-          ? "Held. We write only when something you own is being decided."
-          : result.message,
-      );
-      if (result.ok) setEmail("");
+      const result = await requestEmailAttachment(email);
+      if (result.ok) {
+        setSent(true);
+        setEmailNote(
+          "Check your inbox. Nothing is kept against that address until you follow the link.",
+        );
+        setEmail("");
+      } else {
+        setEmailNote(result.message);
+      }
+    });
+  }
+
+  function forget() {
+    startTransition(async () => {
+      await removeEmail();
+      setAddress(null);
+      setSent(false);
+      setEmailNote("Gone. Your vote is back to living in this browser alone.");
     });
   }
 
@@ -227,22 +245,47 @@ export function Flow({
       </div>
       {error ? <p className="notice">{error}</p> : null}
       {emailEnabled ? (
-        <form className="claim" onSubmit={claim}>
-          <div className="claim-row">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email, so your share outlives this browser"
-              aria-label="Your email address"
-              autoComplete="email"
-            />
-            <button type="submit" disabled={pending || email.length === 0}>
-              Keep it
-            </button>
+        address ? (
+          <div className="claim">
+            <p className="caption">
+              Held against <strong>{address}</strong>. Clear this browser and
+              your vote is still yours.{" "}
+              <button
+                type="button"
+                className="link"
+                disabled={pending}
+                onClick={forget}
+              >
+                Take it back
+              </button>
+            </p>
           </div>
-          {emailNote ? <p className="caption">{emailNote}</p> : null}
-        </form>
+        ) : (
+          <form className="claim" onSubmit={claim}>
+            {!sent ? (
+              <div className="claim-row">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email, so your vote outlives this browser"
+                  aria-label="Your email address"
+                  autoComplete="email"
+                />
+                <button type="submit" disabled={pending || email.length === 0}>
+                  Send a link
+                </button>
+              </div>
+            ) : null}
+            {emailNote ? <p className="caption">{emailNote}</p> : null}
+            {!sent ? (
+              <p className="caption">
+                We send one link to check it is yours. Nothing is kept unless
+                you follow it.
+              </p>
+            ) : null}
+          </form>
+        )
       ) : null}
     </section>
   );

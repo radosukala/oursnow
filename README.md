@@ -28,10 +28,10 @@ as it deserves to be.
 THE VOTE            works — server-authoritative, against Postgres
 THE COLOUR          follows the count; a tie holds what it had
 JOINING             a choice is what joins you; withdrawing does not remove you
-EMAIL               OFF until DATA_CONTROLLER names someone responsible
+EMAIL               confirmed before it is kept; off unless all four variables are set
 SUGGESTIONS         not built — how they are handled has to be agreed first
 MEMBERSHIP          NOT ISSUED. Nothing has been given to anybody
-DEPLOYED            not yet
+DEPLOYED            oursnow.co
 ```
 
 Nothing has been issued to anyone. There is no company holding this, no
@@ -51,16 +51,24 @@ npm run dev
 ## Check it
 
 ```bash
-npm run check:colour
+npm run check:local
 ```
 
-Eighteen assertions against a real Postgres, covering the cases where a
-wrong answer would matter: forty concurrent voters, changing your mind,
-withdrawing, a tie, and an empty tally. It found a genuine defect the first
-time it ran — on an empty database the shared row did not exist yet, so
-`SELECT … FOR UPDATE` locked nothing and simultaneous first votes were not
-serialised. Fixed in `src/lib/colour.ts`; the check is what would catch it
-coming back.
+Thirty assertions against a real Postgres, covering the cases where a wrong
+answer would matter: forty concurrent voters, changing your mind,
+withdrawing, a tie, an empty tally, and the whole address-confirmation path
+— an unconfirmed address is never held, a token we never issued is refused,
+a link works once, an expired one does not, and taking an address back
+removes it without removing the person or their vote.
+
+It found a genuine defect the first time it ran: on an empty database the
+shared row did not exist yet, so `SELECT … FOR UPDATE` locked nothing and
+simultaneous first votes were not serialised. Fixed in `src/lib/colour.ts`;
+the check is what would catch it coming back.
+
+The script deletes every row, so it refuses to run against anything but the
+local scratch database. `check:local` points it there; `check:logic` uses
+whatever `DATABASE_URL` is set, and the guard still stands in the way.
 
 ```bash
 npm run check       # typecheck + lint
@@ -86,6 +94,16 @@ that while the tally is empty.
 Nothing is stored about a visitor who only looked. It counts browsers, not
 people; that is a real limit and the app does not pretend otherwise.
 
+**An address is proved before it is kept.** Typing one sends a single link
+and stores a pending row; the participant's own record is untouched until
+the link is followed. Anyone can type anyone's address into a box, and
+storing it first would mean holding personal data belonging to somebody who
+never asked to be here — and it would make the address useless for the one
+job it has, which is proving later that a vote is yours. Only a hash of the
+token is stored; the token itself exists in the email and nowhere else. It
+travels in the URL fragment, which browsers never send to a server, so a
+corporate mail scanner that follows the link confirms nothing.
+
 **`colour_events`** records why the colour moved. It is never served
 publicly with a participant attached: the public answer is the count.
 
@@ -108,9 +126,11 @@ code refuses to guess:
 | Variable | Blocks | Why it is not a default |
 |---|---|---|
 | `DATA_CONTROLLER` | the email step | whoever is named is answerable for every address stored. Blank means the feature stays off rather than addresses quietly accumulating under nobody's name |
+| `DATA_CONTROLLER_EMAIL` | the email step | a controller nobody can write to is not a contact. It is where people exercise the rights `/deal` promises |
+| `RESEND_API_KEY`, `MAIL_FROM` | the email step | without a way to send the link there is no way to prove an address, and an unproved address is worse than none |
 | `OPENING_COLOUR` | nothing | disclosed on the page as a default, never presented as a vote |
 | `SESSION_SECRET` | everything | rotating it signs every participant out, which is a real event |
 
-Beyond the environment: what membership actually gives people, how
-suggestions are moderated, and the licence are all still open, and the
-pages say so where a visitor would otherwise assume.
+Beyond the environment: what membership actually gives people, and how
+suggestions are moderated, are still open, and the pages say so where a
+visitor would otherwise assume.

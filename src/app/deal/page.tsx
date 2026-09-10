@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DATA_CONTROLLER } from "@/lib/config";
+import {
+  DATA_CONTROLLER,
+  DATA_CONTROLLER_EMAIL,
+  EMAIL_ENABLED,
+} from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "The deal — OURS",
-  description: "One vote each, including the person who made it. All of it fits on one screen.",
+  description:
+    "One vote each, including the person who made it. All of it fits on one screen.",
 };
 
 export const dynamic = "force-dynamic";
@@ -28,10 +33,45 @@ export default function Deal() {
 
       <p>
         <strong>What we hold.</strong>{" "}
-        {DATA_CONTROLLER
-          ? `Your colour, and your email if you leave one. ${DATA_CONTROLLER} is responsible for it. We write only when something you own is being decided, and one click deletes it.`
-          : "Your colour, and a signed cookie so the app knows which vote is yours. No name, no email, nothing else — we are not collecting addresses until somebody is named as responsible for them."}
+        {EMAIL_ENABLED ? (
+          <>
+            Your colour, a signed cookie so the app knows which vote is yours,
+            and your email if you give one. Nothing else — no name, no location,
+            no tracking, no advertising, and nothing bought or sold.
+          </>
+        ) : (
+          <>
+            Your colour, and a signed cookie so the app knows which vote is
+            yours. No name, no email, nothing else — we are not collecting
+            addresses, because nobody has been named as responsible for them.
+          </>
+        )}
       </p>
+
+      {EMAIL_ENABLED ? (
+        <>
+          <p>
+            <strong>The email, exactly.</strong> It does one job: it makes the
+            vote yours rather than this browser’s. We send one link to check the
+            address is really yours, and until you follow it nothing is kept.
+            After that we write only when something you own is being decided.
+            No newsletter, no marketing, nobody else gets it. One click on the
+            button page deletes it, and we keep no copy.
+          </p>
+
+          <p>
+            <strong>Who is responsible for it.</strong> {DATA_CONTROLLER}.
+            Write to{" "}
+            <a href={`mailto:${DATA_CONTROLLER_EMAIL}`}>
+              {DATA_CONTROLLER_EMAIL}
+            </a>{" "}
+            to see what is held about you, correct it, take it elsewhere, or
+            have it erased. You can also complain to your national data
+            protection authority; in Czechia that is the Úřad pro ochranu
+            osobních údajů.
+          </p>
+        </>
+      ) : null}
 
       <p>
         <strong>How real it is today.</strong> A proposal. Nothing has been

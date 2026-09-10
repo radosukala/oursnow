@@ -1,7 +1,7 @@
 import { readState, type State } from "@/lib/colour";
 import { currentParticipantId } from "@/lib/participant";
-import { EMAIL_ENABLED } from "@/lib/config";
-import { OPENING_COLOUR } from "@/lib/config";
+import { EMAIL_ENABLED, OPENING_COLOUR } from "@/lib/config";
+import { heldEmail } from "@/lib/email";
 import { Flow } from "./flow";
 
 export const dynamic = "force-dynamic";
@@ -19,10 +19,15 @@ const unknownState: State = {
 
 export default async function Home() {
   let state = unknownState;
+  let held: string | null = null;
   let reachable = true;
 
   try {
-    state = await readState(await currentParticipantId());
+    const id = await currentParticipantId();
+    [state, held] = await Promise.all([
+      readState(id),
+      EMAIL_ENABLED ? heldEmail(id) : Promise.resolve(null),
+    ]);
   } catch (error) {
     // The front door should open even when the count cannot be reached.
     // A visitor who arrives during an outage gets the page and an honest
@@ -36,6 +41,11 @@ export default async function Home() {
   }
 
   return (
-    <Flow initial={state} emailEnabled={EMAIL_ENABLED} reachable={reachable} />
+    <Flow
+      initial={state}
+      emailEnabled={EMAIL_ENABLED}
+      reachable={reachable}
+      held={held}
+    />
   );
 }

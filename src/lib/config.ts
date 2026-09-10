@@ -19,14 +19,51 @@ export const OPENING_COLOUR: Colour = isColour(process.env.OPENING_COLOUR)
   : "blue";
 
 /**
- * Who is legally responsible for personal data.
- *
- * The email step is unavailable until this names somebody. That is
- * deliberate: an address the app holds needs a person answerable for it,
- * and leaving this blank should switch the feature off rather than quietly
- * collect addresses nobody has claimed responsibility for.
+ * Who is legally responsible for the personal data this holds, and where a
+ * person reaches them. Both are shown on `/deal`, because an address you
+ * cannot write to is not a contact.
  */
-export const DATA_CONTROLLER: string | null =
-  process.env.DATA_CONTROLLER?.trim() || null;
+export const DATA_CONTROLLER = process.env.DATA_CONTROLLER?.trim() || null;
+export const DATA_CONTROLLER_EMAIL =
+  process.env.DATA_CONTROLLER_EMAIL?.trim() || null;
 
-export const EMAIL_ENABLED = DATA_CONTROLLER !== null;
+/** Where confirmation mail comes from, and the key that sends it. */
+export const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim() || null;
+export const MAIL_FROM = process.env.MAIL_FROM?.trim() || null;
+
+/**
+ * The public address, used to build the link inside a confirmation email.
+ * Falls back to what the platform reports so previews confirm against
+ * themselves rather than sending people to production.
+ */
+export const SITE_URL = (
+  process.env.SITE_URL?.trim() ||
+  (process.env.VERCEL_ENV === "production"
+    ? "https://oursnow.co"
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3021")
+).replace(/\/$/, "");
+
+/**
+ * Whether to offer the email step at all.
+ *
+ * It needs all four: somebody named as responsible, a way to reach them, a
+ * way to send the confirmation, and an address to send it from. Missing any
+ * one of those and the box is not rendered, because the alternative is
+ * collecting addresses that nobody has claimed responsibility for or that
+ * nobody has proved are theirs.
+ */
+export const EMAIL_ENABLED = Boolean(
+  DATA_CONTROLLER && DATA_CONTROLLER_EMAIL && RESEND_API_KEY && MAIL_FROM,
+);
+
+/** Which piece is missing, for the health check. Never shown to a visitor. */
+export function emailBlockers(): string[] {
+  const missing: string[] = [];
+  if (!DATA_CONTROLLER) missing.push("DATA_CONTROLLER");
+  if (!DATA_CONTROLLER_EMAIL) missing.push("DATA_CONTROLLER_EMAIL");
+  if (!RESEND_API_KEY) missing.push("RESEND_API_KEY");
+  if (!MAIL_FROM) missing.push("MAIL_FROM");
+  return missing;
+}

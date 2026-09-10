@@ -86,6 +86,41 @@ export const colourEvents = pgTable(
   (t) => [index("colour_events_at_idx").on(t.at)],
 );
 
+/**
+ * An address somebody has asked us to attach, waiting for them to prove it
+ * is theirs.
+ *
+ * The address is not written to `participants` until a link sent to it is
+ * followed. Anyone can type anyone's address into a box; storing it before
+ * it is confirmed would mean holding the personal data of somebody who
+ * never asked to be here, and it would make the address useless for the one
+ * job it has — proving a share is yours later.
+ *
+ * Only a hash of the token is stored. The token itself exists in the email
+ * and nowhere else, so this table cannot be used to authorise anything.
+ * Rows expire, and are deleted on confirmation.
+ */
+export const emailConfirmations = pgTable(
+  "email_confirmations",
+  {
+    id: text("id").primaryKey(),
+    participantId: text("participant_id")
+      .notNull()
+      .references(() => participants.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("email_confirmations_token_idx").on(t.tokenHash),
+    index("email_confirmations_expires_idx").on(t.expiresAt),
+  ],
+);
+
 export type Participant = typeof participants.$inferSelect;
 export type ColourPreference = typeof colourPreferences.$inferSelect;
 export type ColourEvent = typeof colourEvents.$inferSelect;
+export type EmailConfirmation = typeof emailConfirmations.$inferSelect;

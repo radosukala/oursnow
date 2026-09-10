@@ -13,13 +13,17 @@
  * Run against a scratch database:  npm run check:colour
  * (the env file is loaded by the runner, before these imports resolve)
  */
+import { createHash, randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { ulid } from "ulid";
 import { db } from "../src/db";
 import { setPreference, readState } from "../src/lib/colour";
+import { confirmEmail, forgetEmail, heldEmail } from "../src/lib/email";
 import {
   appState,
   colourEvents,
   colourPreferences,
+  emailConfirmations,
   participants,
 } from "../src/db/schema";
 
@@ -35,6 +39,7 @@ function check(name: string, condition: boolean, detail = "") {
 }
 
 async function reset() {
+  await db.delete(emailConfirmations);
   await db.delete(colourEvents);
   await db.delete(colourPreferences);
   await db.delete(participants);
@@ -109,6 +114,64 @@ async function main() {
   check("nothing is invented", state.blue + state.red === 0);
   check("the last committed colour stands", state.committed === "red", state.committed);
   check("the page can say it is empty", state.opening === true);
+
+  console.log("\nattaching an address");
+  await reset();
+  const voter = ulid();
+  await setPreference(voter, "blue");
+
+  // What requestEmail writes before anything is sent. The address is
+  // deliberately NOT on the participant yet.
+  const token = randomBytes(32).toString("base64url");
+  await db.insert(emailConfirmations).values({
+    id: ulid(),
+    participantId: voter,
+    email: "someone@example.com",
+    tokenHash: createHash("sha256").update(token).digest("hex"),
+    expiresAt: new Date(Date.now() + 60 * 60_000),
+  });
+  check("an unconfirmed address is not held", (await heldEmail(voter)) === null);
+
+  const wrong = await confirmEmail(randomBytes(32).toString("base64url"));
+  check("a token we never issued is refused", wrong.ok === false);
+  check("and it did not attach anything", (await heldEmail(voter)) === null);
+
+  const good = await confirmEmail(token);
+  check("the real link attaches the address", good.ok === true);
+  check(
+    "and the participant now holds it",
+    (await heldEmail(voter)) === "someone@example.com",
+  );
+
+  const again = await confirmEmail(token);
+  check("the same link cannot be used twice", again.ok === false);
+  const leftover = await db.select().from(emailConfirmations);
+  check("no pending row survives confirmation", leftover.length === 0, `${leftover.length} left`);
+
+  const expiredToken = randomBytes(32).toString("base64url");
+  await db.insert(emailConfirmations).values({
+    id: ulid(),
+    participantId: voter,
+    email: "later@example.com",
+    tokenHash: createHash("sha256").update(expiredToken).digest("hex"),
+    expiresAt: new Date(Date.now() - 1000),
+  });
+  const stale = await confirmEmail(expiredToken);
+  check("an expired link is refused", stale.ok === false);
+  check(
+    "and does not replace the held address",
+    (await heldEmail(voter)) === "someone@example.com",
+  );
+
+  await forgetEmail(voter);
+  check("taking it back removes the address", (await heldEmail(voter)) === null);
+  const stillThere = await db
+    .select()
+    .from(participants)
+    .where(eq(participants.id, voter));
+  check("but not the participant", stillThere.length === 1);
+  const stateAfter = await readState(voter);
+  check("and not their vote", stateAfter.mine === "blue");
 
   await reset();
   console.log(

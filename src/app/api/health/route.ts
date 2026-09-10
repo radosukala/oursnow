@@ -21,9 +21,21 @@ export async function GET() {
       Boolean(process.env.SESSION_SECRET) &&
       (process.env.SESSION_SECRET?.length ?? 0) >= 16,
     openingColour: process.env.OPENING_COLOUR ?? "(unset, defaults to blue)",
-    dataController: Boolean(process.env.DATA_CONTROLLER?.trim()),
     nodeEnv: process.env.NODE_ENV ?? null,
   };
+
+  // The email step needs all four; say which are missing rather than just
+  // reporting that it is off.
+  const emailMissing = [
+    ["DATA_CONTROLLER", process.env.DATA_CONTROLLER],
+    ["DATA_CONTROLLER_EMAIL", process.env.DATA_CONTROLLER_EMAIL],
+    ["RESEND_API_KEY", process.env.RESEND_API_KEY],
+    ["MAIL_FROM", process.env.MAIL_FROM],
+  ]
+    .filter(([, value]) => !(typeof value === "string" && value.trim()))
+    .map(([name]) => name);
+  checks.emailEnabled = emailMissing.length === 0;
+  if (emailMissing.length > 0) checks.emailMissing = emailMissing;
 
   if (!process.env.DATABASE_URL) {
     return NextResponse.json(
