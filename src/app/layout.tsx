@@ -15,6 +15,12 @@ export const metadata: Metadata = {
     siteName: "OURS",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "A very small thing to own",
+    description:
+      "We started with a button. You get a say. So does the person who made it.",
+  },
   robots: { index: true, follow: true },
 };
 
