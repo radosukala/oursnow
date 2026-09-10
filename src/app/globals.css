@@ -1,0 +1,349 @@
+/*
+  The design adopted on 10 September 2026: warm paper, one serif headline,
+  one saturated object. Committed to a single light identity on purpose —
+  the paper is the brand — so every colour is painted explicitly rather
+  than inherited from whatever the browser would otherwise supply.
+*/
+
+:root {
+  color-scheme: light;
+
+  --paper: #fffefa;
+  --ink: #20201e;
+  --muted: #696861;
+  --line: #deddd6;
+  --edge: #c9c8c1;
+
+  --blue: #244ce8;
+  --blue-deep: #1533ad;
+  --red: #cf392a;
+  --red-deep: #952219;
+
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: var(--sans);
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 12px 16px;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+}
+.skip:focus {
+  left: 16px;
+  top: 16px;
+  z-index: 10;
+}
+
+/* ---- the sheet ---------------------------------------------------- */
+
+.page {
+  min-height: 100dvh;
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.brand {
+  margin: 0;
+  text-align: left;
+  font: 400 15px/1.2 var(--serif);
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+  color: var(--ink);
+}
+.brand a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.main {
+  margin: auto;
+  padding: 52px 0 32px;
+  width: 100%;
+  max-width: 470px;
+}
+
+h1,
+h2 {
+  margin: 0 0 26px;
+  font: 400 clamp(36px, 7vw, 56px) / 1.02 var(--serif);
+  letter-spacing: -1.8px;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+.sub {
+  margin: 0 auto 26px;
+  max-width: 330px;
+  font: 400 15px/1.6 var(--sans);
+  color: var(--muted);
+}
+
+.caption {
+  margin: 18px 0 0;
+  font: 400 12px/1.5 var(--sans);
+  color: var(--muted);
+}
+
+/* ---- the object --------------------------------------------------- */
+
+.object {
+  border: 0;
+  border-radius: 999px;
+  min-width: 170px;
+  padding: 21px 34px;
+  font-size: 17px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--blue);
+  box-shadow: 0 5px 0 var(--blue-deep);
+  transition:
+    background-color 0.48s ease,
+    box-shadow 0.48s ease,
+    transform 0.15s ease;
+}
+.object[data-colour="red"] {
+  background: var(--red);
+  box-shadow: 0 5px 0 var(--red-deep);
+}
+.object:active {
+  transform: translateY(3px);
+}
+
+/* ---- choosing ----------------------------------------------------- */
+
+.choices {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 27px;
+}
+
+.choice {
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  padding: 12px 23px;
+  font-size: 14px;
+  min-height: 44px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.choice:hover {
+  border-color: var(--ink);
+}
+.choice[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: #eeede6;
+}
+.choice:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ---- the verdict -------------------------------------------------- */
+
+.outcome {
+  margin: 20px auto 0;
+  max-width: 22em;
+  font: italic 400 18px/1.45 var(--serif);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.tally {
+  margin: 8px 0 0;
+  font: 12px/1.6 var(--mono);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.actions {
+  margin-top: 6px;
+}
+
+.link {
+  border: 0;
+  border-bottom: 1px solid #aaa99f;
+  background: none;
+  color: var(--ink);
+  font-size: 13px;
+  padding: 8px 0;
+  margin: 12px 8px 0;
+  min-height: 44px;
+  display: inline-block;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+.link:hover {
+  border-color: var(--ink);
+}
+
+/* ---- the foot ----------------------------------------------------- */
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.foot a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 10px 0;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+}
+.foot a:hover {
+  color: var(--ink);
+}
+
+/* ---- the quiet pages ---------------------------------------------- */
+
+.detail {
+  margin: auto;
+  max-width: 380px;
+  text-align: left;
+}
+.detail h1 {
+  font-size: 38px;
+}
+.detail p {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.detail strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+.detail .caption {
+  margin-top: 0;
+}
+
+/* ---- the email step ----------------------------------------------- */
+
+.claim {
+  margin: 22px auto 0;
+  max-width: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.claim-row {
+  display: flex;
+  gap: 6px;
+}
+.claim input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--ink);
+  font: 16px/1.4 var(--sans);
+  text-align: center;
+}
+.claim button {
+  border: 1px solid var(--ink);
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 11px 15px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.notice {
+  margin: 0;
+  font: 400 12px/1.5 var(--sans);
+  color: var(--red-deep);
+}
+
+/* ---- the reveal ---------------------------------------------------- */
+
+.enter > * {
+  animation: rise 0.46s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.enter > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.enter > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.enter > *:nth-child(4) {
+  animation-delay: 0.26s;
+}
+.enter > *:nth-child(5) {
+  animation-delay: 0.34s;
+}
+.enter > *:nth-child(6) {
+  animation-delay: 0.42s;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .object {
+    transition: none;
+  }
+  .enter > * {
+    animation: none;
+  }
+}
